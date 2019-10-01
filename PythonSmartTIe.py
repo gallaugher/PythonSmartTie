@@ -109,7 +109,7 @@ purple = [fancy.CRGB(160, 32, 240),  # purple
           fancy.CRGB(238, 130, 238)]  # violet
 """
 
-bc_colors = [fancy.CRGB(255, 0, 0),  # purple
+bc_colors = [fancy.CRGB(215, 0, 0),  # purple
           fancy.CRGB(255, 215, 0)]  # violet
 
 all_colors = [fancy.CRGB(0, 0, 0),  # black
@@ -189,6 +189,40 @@ def remapRange(value, leftMin, leftMax, rightMin, rightMax):
     # Convert the 0-1 range into a value in the right range.
     return int(rightMin + (valueScaled * rightSpan))
 
+def schoolColors(offset, fadeup, palette):
+    blank = [0, 0, 0]
+    color1 = [100, 0, 0]
+    color2 = [100, 30, 0]
+    strip.fill(blank)
+    strip.write()
+
+    strip.fill(color1)
+    strip.write()
+    time.sleep(0.2)
+    strip.fill(blank)
+    strip.write()
+    time.sleep(0.15)
+    strip.fill(color1)
+    strip.write()
+    time.sleep(0.2)
+    strip.fill(blank)
+    strip.write()
+    time.sleep(1.0)
+
+    strip.fill(color2)
+    strip.write()
+    time.sleep(0.2)
+    strip.fill(blank)
+    strip.write()
+    time.sleep(0.2)
+    strip.fill(color2)
+    strip.write()
+    time.sleep(0.2)
+    strip.fill(blank)
+    strip.write()
+    time.sleep(1.0)
+
+
 def buttonAnimation(offset, fadeup, palette):
     """ Reminding me of what Sparkle Scarf could do
     if ledmode == 2:
@@ -261,7 +295,7 @@ while True:
             if isinstance(packet, ButtonPacket):
                 if packet.pressed:
                     if packet.button == ButtonPacket.BUTTON_1:
-                        animation_number = 1
+                        animation_number = 5
                         run_animation = True
                     elif packet.button == ButtonPacket.BUTTON_2:
                         animation_number = 2
@@ -318,6 +352,8 @@ while True:
                 larson()
             elif animation_number == 2 or animation_number == 3 or animation_number == 4:
                 offset = buttonAnimation(offset, fadeup, palette)
+            elif animation_number == 5:
+                schoolColors(offset, fadeup, palette)
 
     # If we got here, we lost the connection. Go up to the top and start
     # advertising again and waiting for a connection.
