@@ -47,8 +47,6 @@ saturation = 255  # 0-255, 0 is pure white, 255 is fully saturated color
 steps = 0.01  # how wide the bands of color are.
 offset = 0  # cummulative steps
 fadeup = True  # start with fading up - increase steps until offset reaches 1
-index = 8  # midway color selection
-blend = True  # color blending between palette indices
 
 # initialize list with all pixels off
 palette = [0] * num_leds
@@ -62,9 +60,9 @@ wait_increment = 0.02
 min_wait_time = 0.02
 max_wait_time = 1.0
 
-# set an initial color to use in case the user uses arrows before choosing a color.
-color = [0, 0, 255]
-fade_color = [0, 0, 64]
+# set an initial color to use in case the user uses arrows before choosing a color. 
+color = [0, 0, 255] # Bright Blue
+fade_color = [0, 0, 64] # Deeper Blue
 
 # Declare a NeoPixel object on led_pin with num_leds as pixels
 # No auto-write.
@@ -76,17 +74,7 @@ fade_color = [0, 0, 64]
 # "strip" will refer to neopixel strand attached to the cpx, with data pin at A1
 strip = neopixel.NeoPixel(led_pin, num_leds, brightness=1, auto_write=False)
 
-# button setup
-"""
-button = DigitalInOut(board.D4)
-button.direction = Direction.INPUT
-button.pull = Pull.UP
-prevkeystate = False
-"""
 ledmode = 0  # button press counter, switch color palettes
-
-larson_loops = 3
-
 button = digitalio.DigitalInOut(board.BUTTON_A)
 button.switch_to_input(pull=digitalio.Pull.DOWN)
 
@@ -95,7 +83,10 @@ button.switch_to_input(pull=digitalio.Pull.DOWN)
 # * The last (3) palettes use a format identical to the FastLED Arduino Library
 # see FastLED - colorpalettes.cpp
 
-# John's Blue Experiment
+# Erin St. Blaine offers these colors in her tutorial
+# https://learn.adafruit.com/animated-neopixel-gemma-glow-fur-scarf/circuitpython-code
+# I don't use them all, so feel free to experiment.
+
 blue = [fancy.CRGB(0, 0, 0),
           fancy.CRGB(75, 25, 255)]
 
@@ -104,20 +95,19 @@ forest = [fancy.CRGB(0, 255, 0),  # green
 
 ocean = [fancy.CRGB(0, 0, 255),  # blue
          fancy.CRGB(0, 255, 0)]  # green
-"""
+
 purple = [fancy.CRGB(160, 32, 240),  # purple
           fancy.CRGB(238, 130, 238)]  # violet
-"""
 
-bc_colors = [fancy.CRGB(215, 0, 0),  # purple
+# An approximation of Maroon & Gold - my school colors
+school_colors = [fancy.CRGB(215, 0, 0),  # purple
           fancy.CRGB(255, 215, 0)]  # violet
 
 all_colors = [fancy.CRGB(0, 0, 0),  # black
               fancy.CRGB(255, 255, 255)]  # white
 
 washed_out = [fancy.CRGB(0, 0, 0),  # black
-              fancy.CRGB(0, 0, 255)]  # blue
-#              fancy.CRGB(255, 0, 255)]  # purple
+              fancy.CRGB(255, 0, 255)]  # purple
 
 rainbow = [0xFF0000, 0xD52A00, 0xAB5500, 0xAB7F00,
            0xABAB00, 0x56D500, 0x00FF00, 0x00D52A,
@@ -135,7 +125,6 @@ heat_colors = [0x330000, 0x660000, 0x990000, 0xCC0000, 0xFF0000,
 
 # mimics a larson scanner like Cylons in battlestar galactica
 def larson():
-    # for turns in range(0, larson_loops):
     for i in range(0, num_leds+1):
         if i-2 >= 0 and i-2 <= num_leds-1:
             strip[i-2] = ([0, 0, 0])
@@ -145,8 +134,6 @@ def larson():
             strip[i] = (color)
         strip.write()
         time.sleep(wait_time)
-
-    # time.sleep(1.0)
 
     for i in range(num_leds-1, -2, -1):
         if i+2 <= num_leds-1 and i+2 >= 0:
@@ -175,7 +162,6 @@ def wheel(pos):
     else:
         pos -= 170
         return (0, int(pos * 3), int(255 - pos * 3))
-
 
 def remapRange(value, leftMin, leftMax, rightMin, rightMax):
     # this remaps a value fromhere original (left) range to new (right) range
@@ -224,30 +210,6 @@ def schoolColors(offset, fadeup, palette):
 
 
 def buttonAnimation(offset, fadeup, palette):
-    """ Reminding me of what Sparkle Scarf could do
-    if ledmode == 2:
-    #    palette = forest
-
-    # Ocean
-    elif ledmode == 3:
-        # palette = ocean
-
-    # Purple Lovers
-    elif ledmode == 4:
-        # palette = rainbow_stripe
-
-    # All the colors!
-    elif ledmode == 5:
-        palette = rainbow
-
-    # Rainbow stripes
-    elif ledmode == 6:
-        palette = rainbow_stripe
-
-    # All the colors except the greens, washed out
-    elif ledmode == 7:
-        palette = washed_out
-    """
     # for x in range(0, 200):
     if ledmode != 0: # if not larson
         for i in range(num_leds):
@@ -265,15 +227,13 @@ def buttonAnimation(offset, fadeup, palette):
             if offset <= 0:
                 fadeup = True
         return offset
-        # strip.fill([0,0,0])
-        # strip.show()
 
 while True:
     uart_server.start_advertising()
     while not uart_server.connected:
         pass
 
-        # Now we're connected
+    # Now we're connected
 
     while uart_server.connected:
         if uart_server.in_waiting:
@@ -281,13 +241,10 @@ while True:
             if isinstance(packet, ColorPacket):
                 run_animation = False
                 animation_number = 0
-                # Change the NeoPixel color.
-                # pixel.fill(packet.color)
-                # pixel.write()
                 strip.fill(packet.color)
                 strip.write()
                 color = packet.color
-                # the // drop any remainder so the values remain Ints, which color needs
+                # the // below will drop any remainder so the values remain Ints, which color needs
                 fade_color = (color[0]//2, color[1]//2, color[2]//2)
                 # reset light_position after picking a color
                 light_position = -1
@@ -304,7 +261,7 @@ while True:
                         ledmode = 2
                     elif packet.button == ButtonPacket.BUTTON_3:
                         animation_number = 3
-                        palette = bc_colors
+                        palette = school_colors
                         run_animation = True
                         ledmode = 3
                     elif packet.button == ButtonPacket.BUTTON_4:
