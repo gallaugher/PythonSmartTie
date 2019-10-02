@@ -1,5 +1,9 @@
 # PythonSmartTie
 # Be sure to save this code as code.py on your CircuitPlayground Express Bluefruit device.
+
+Tutorial of full build + pointers for those using CPXbf Alpha, at:
+https://bit.ly/PythonSmartTie
+
 CircuitPython Code to use a Bluefruit app to control a Neopixel strand. Used in a wearable "smart tie" project.
 By John Gallaugher https://gallaugher.com  Twitter: @gallaugher  YouTube: bit.ly/GallaugherYouTube
 
