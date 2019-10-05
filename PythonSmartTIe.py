@@ -60,7 +60,7 @@ wait_increment = 0.02
 min_wait_time = 0.02
 max_wait_time = 1.0
 
-# set an initial color to use in case the user uses arrows before choosing a color. 
+# set an initial color to use in case the user uses arrows before choosing a color.
 color = [0, 0, 255] # Bright Blue
 fade_color = [0, 0, 64] # Deeper Blue
 
@@ -237,7 +237,11 @@ while True:
 
     while uart_server.connected:
         if uart_server.in_waiting:
-            packet = Packet.from_stream(uart_server)
+            try:
+                packet = Packet.from_stream(uart_server)
+            except ValueError:
+                continue # or pass. This will start the next iteration of the loop and try to get a valid packet again.
+
             if isinstance(packet, ColorPacket):
                 run_animation = False
                 animation_number = 0
