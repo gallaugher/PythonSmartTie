@@ -30,13 +30,20 @@ import neopixel
 import digitalio
 import time
 from digitalio import DigitalInOut, Direction, Pull
-from adafruit_ble.uart_server import UARTServer
-
+from adafruit_ble import BLERadio
+from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
+from adafruit_ble.services.nordic import UARTService
 from adafruit_bluefruit_connect.packet import Packet
 from adafruit_bluefruit_connect.color_packet import ColorPacket
 from adafruit_bluefruit_connect.button_packet import ButtonPacket
 
-uart_server = UARTServer()
+# setup bluetooth
+ble = BLERadio()
+uart_server = UARTService()
+advertisement = ProvideServicesAdvertisement(uart_server)
+# Give your CPB a unique name between the quotes below
+advertisement.complete_name = "ProfGs-Tie"
+
 run_animation = False
 animation_number = -1
 
@@ -229,89 +236,93 @@ def buttonAnimation(offset, fadeup, palette):
         return offset
 
 while True:
-    uart_server.start_advertising()
-    while not uart_server.connected:
+    ble.start_advertising(advertisement)
+    while not ble.connected:
         pass
+    ble.stop_advertising()
 
     # Now we're connected
 
-    while uart_server.connected:
-        if uart_server.in_waiting:
-            try:
-                packet = Packet.from_stream(uart_server)
-            except ValueError:
-                continue # or pass. This will start the next iteration of the loop and try to get a valid packet again.
+    while ble.connected:
+        # if ble.in_waiting:
+        try:
+            packet = Packet.from_stream(uart_server)
+        except ValueError:
+            continue # or pass. This will start the next 
+            
+        if isinstance(packet, ColorPacket):
+            print("*** color sent")
+            print("color = ", ColorPacket)
+            run_animation = False
+            animation_number = 0
+            strip.fill(packet.color)
+            strip.write()
+            color = packet.color
+            # the // below will drop any remainder so the values remain Ints, which color needs
+            fade_color = (color[0]//2, color[1]//2, color[2]//2)
+            # reset light_position after picking a color
+            light_position = -1
 
-            if isinstance(packet, ColorPacket):
-                run_animation = False
-                animation_number = 0
-                strip.fill(packet.color)
-                strip.write()
-                color = packet.color
-                # the // below will drop any remainder so the values remain Ints, which color needs
-                fade_color = (color[0]//2, color[1]//2, color[2]//2)
-                # reset light_position after picking a color
-                light_position = -1
-
-            if isinstance(packet, ButtonPacket):
-                if packet.pressed:
-                    if packet.button == ButtonPacket.BUTTON_1:
-                        animation_number = 5
-                        run_animation = True
-                    elif packet.button == ButtonPacket.BUTTON_2:
-                        animation_number = 2
-                        palette = blue
-                        run_animation = True
-                        ledmode = 2
-                    elif packet.button == ButtonPacket.BUTTON_3:
-                        animation_number = 3
-                        palette = school_colors
-                        run_animation = True
-                        ledmode = 3
-                    elif packet.button == ButtonPacket.BUTTON_4:
-                        animation_number = 4
-                        run_animation = True
-                        palette = rainbow_stripe
-                        ledmode = 4
-                        buttonAnimation(offset, fadeup, palette)
-                    elif packet.button == ButtonPacket.UP or packet.button == ButtonPacket.DOWN:
-                        animation_number = 0
-                        run_animation = False
-                        # The UP or DOWN button was pressed.
-                        increase_or_decrease = 1
-                        if packet.button == ButtonPacket.DOWN:
-                            increase_or_decrease = -1
-                        light_position += increase_or_decrease
-                        if light_position >= len(strip):
-                            light_position = len(strip)-1
-                        if light_position <= -1:
-                            light_position = 0
-                        strip.fill([0, 0, 0])
-                        strip[light_position] = color
-                        strip.show()
-                    elif packet.button == ButtonPacket.RIGHT:
-                        # The RIGHT button was pressed.
-                        wait_time = wait_time - wait_increment
-                        if wait_time <= min_wait_time:
-                            wait_time = min_wait_time
-                        animation_number = 1
-                        run_animation = True
-                        # reset light_position after animation
-                        light_position = -1
-                    elif packet.button == ButtonPacket.LEFT:
-                        # The LEFT button was pressed.
-                        wait_time = wait_time + wait_increment
-                        if wait_time >= max_wait_time:
-                            wait_time = max_wait_time
-                        animation_number = 1
-                        run_animation = True
-                        # reset light_position after animation
-                        light_position = -1
+        if isinstance(packet, ButtonPacket):
+            if packet.pressed:
+                if packet.button == ButtonPacket.BUTTON_1:
+                    animation_number = 5
+                    run_animation = True
+                elif packet.button == ButtonPacket.BUTTON_2:
+                    animation_number = 2
+                    palette = blue
+                    run_animation = True
+                    ledmode = 2
+                elif packet.button == ButtonPacket.BUTTON_3:
+                    animation_number = 3
+                    palette = school_colors
+                    run_animation = True
+                    ledmode = 3
+                elif packet.button == ButtonPacket.BUTTON_4:
+                    animation_number = 4
+                    run_animation = True
+                    palette = rainbow_stripe
+                    ledmode = 4
+                    buttonAnimation(offset, fadeup, palette)
+                elif packet.button == ButtonPacket.UP or packet.button == ButtonPacket.DOWN:
+                    animation_number = 0
+                    run_animation = False
+                    # The UP or DOWN button was pressed.
+                    increase_or_decrease = 1
+                    if packet.button == ButtonPacket.DOWN:
+                        increase_or_decrease = -1
+                    light_position += increase_or_decrease
+                    if light_position >= len(strip):
+                        light_position = len(strip)-1
+                    if light_position <= -1:
+                        light_position = 0
+                    strip.fill([0, 0, 0])
+                    strip[light_position] = color
+                    strip.show()
+                elif packet.button == ButtonPacket.RIGHT:
+                    # The RIGHT button was pressed.
+                    wait_time = wait_time - wait_increment
+                    if wait_time <= min_wait_time:
+                        wait_time = min_wait_time
+                    animation_number = 1
+                    run_animation = True
+                    # reset light_position after animation
+                    light_position = -1
+                elif packet.button == ButtonPacket.LEFT:
+                    # The LEFT button was pressed.
+                    wait_time = wait_time + wait_increment
+                    if wait_time >= max_wait_time:
+                        wait_time = max_wait_time
+                    animation_number = 1
+                    run_animation = True
+                    # reset light_position after animation
+                    light_position = -1
 
         if run_animation == True:
             if animation_number == 1:
                 larson()
             elif animation_number == 2 or animation_number == 3 or animation_number == 4:
+                print("*** DOING FADE ***")
                 offset = buttonAnimation(offset, fadeup, palette)
             elif animation_number == 5:
                 schoolColors(offset, fadeup, palette)
